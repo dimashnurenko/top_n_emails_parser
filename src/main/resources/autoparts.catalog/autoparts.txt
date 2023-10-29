@@ -1,0 +1,33 @@
+auto_part:
+    id
+    name
+    serial_number
+    manufacturer
+    weight
+
+auto_part_compatibility_mapping:
+    part_id
+    compatible_part_id
+
+I would use SQL database (postgres):
+    - the data has known structure
+    - updating auto_parts and mapping within one transaction if it's necessary
+    - foreign key control and data consistency management on the DB level
+
+The adding and removing auto parts can be managed separately from the compatibility mapping.
+
+How is your solution impacted if the number of parts in the catalog reaches tens of millions?
+
+If we expect increasing the count of entities dramatically (tens of millions), we can use partitioning
+for the auto_part table and partition it by auto model or by date (depends on business model and data use cases)
+
+
+How does the solution change if new parts are added and old parts removed from the catalog at high frequency?
+
+I would add read replica. In this case adding and removing parts' operations will be invoked on the master DB
+(write replica), on the other hand the read operations will be invoked on the read replica.
+The data replication can be performed asynchronously in order not to impact write/update/delete operations time.
+
+For improving reading time:
+ - add indexes for the columns we use in search queries
+ - add cache, we can use search query as the key (adding cache introduces the other level of complexity)
